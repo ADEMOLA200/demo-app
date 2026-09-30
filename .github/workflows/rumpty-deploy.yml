@@ -27,6 +27,9 @@ jobs:
       - name: Deploy to VM
         env:
           RUMPTY_API_KEY: ${{ secrets.RUMPTY_TOKEN }}
+          VM_SSH_KEY: ${{ secrets.VM_SSH_KEY }}
         run: |
-          rumpty copy ./dist tutorial-vm:/var/www/tutorial-vm --ws ademola-019f56b4
-          rumpty exec tutorial-vm --ws ademola-019f56b4 -- sudo systemctl reload nginx
+          printf '%s\n' "$VM_SSH_KEY" > /tmp/deploy_key
+          chmod 600 /tmp/deploy_key
+          rumpty copy ./dist tutorial-vm:/var/www/tutorial-vm --ws ademola-019f56b4 --identity /tmp/deploy_key
+          rumpty exec tutorial-vm --ws ademola-019f56b4 --identity /tmp/deploy_key -- sudo systemctl reload nginx

@@ -1,26 +1,32 @@
 name: Deploy to RumptyCloud
+
 on:
   push:
     branches: [master]
   workflow_dispatch:
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
+
       - name: Build
         run: |
           npm ci
           npm run build
-      - name: Deploy to RumptyCloud
-        uses: rumptycloud/deploy-action@v1
-        with:
-          token: ${{ secrets.RUMPTY_TOKEN }}
-          vm-id: ${{ secrets.RUMPTY_VM_ID }}
-          source: ./dist
-          target: /var/www/tutorial-vm
-          after-deploy: sudo systemctl reload nginx
+
+      - name: Install Rumpty CLI
+        run: curl -fsSL https://get.rumptycloud.com | sh
+
+      - name: Deploy to VM
+        env:
+          RUMPTY_API_KEY: ${{ secrets.RUMPTY_TOKEN }}
+        run: |
+          rumpty copy ./dist tutorial-vm:/var/www/tutorial-vm --ws ademola-019f56b4
+          rumpty exec tutorial-vm --ws ademola-019f56b4 -- sudo systemctl reload nginx
